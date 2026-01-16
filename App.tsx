@@ -211,7 +211,7 @@ const App: React.FC = () => {
                {installPrompt && (
                    <button 
                      onClick={handleInstallClick}
-                     className="hidden md:flex bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white p-2.5 rounded-xl transition-all border border-emerald-500/20"
+                     className="flex bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white p-2.5 rounded-xl transition-all border border-emerald-500/20"
                      title="Install App"
                    >
                      <Download size={20} />
@@ -280,4 +280,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
