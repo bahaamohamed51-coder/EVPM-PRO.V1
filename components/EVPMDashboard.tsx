@@ -154,6 +154,8 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
     RSM: '',
     SM: '',
     'Dist Name': '',
+    'T.L Name': '',      // New Filter
+    SALESMANNAMEA: '',   // New Filter
     Channel: '',
     ...userFilters
   });
@@ -320,9 +322,21 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
         RSM: userFilters['RSM'] || '',
         SM: userFilters['SM'] || '',
         'Dist Name': userFilters['Dist Name'] || '',
+        'T.L Name': userFilters['T.L Name'] || '',
+        SALESMANNAMEA: userFilters['SALESMANNAMEA'] || '',
         Channel: userFilters['Channel'] || ''
     });
   };
+
+  // Helper for nice labels
+  const getLabel = (key: string) => {
+      if (key === 'SALESMANNAMEA') return 'Salesman';
+      if (key === 'T.L Name') return 'Team Leader';
+      return key.replace('_', ' ');
+  }
+
+  // Define Filters Order
+  const filterKeys = ['Region', 'RSM', 'SM', 'Dist Name', 'T.L Name', 'SALESMANNAMEA', 'Channel'];
 
   return (
     <div className="space-y-6 pb-12">
@@ -347,10 +361,11 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                 </div>
             </div>
             
-            {/* Dropdown Filters INCLUDING DATE */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Dropdown Filters INCLUDING DATE + NEW FILTERS */}
+            {/* Expanded Grid to 8 Columns on XL screens to fit Date + 7 Filters */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
                 {/* 1. Date Picker with Admin Styling */}
-                <div className="relative col-span-1 md:col-span-1">
+                <div className="relative col-span-1">
                     <input 
                         type="date" 
                         value={selectedDate} 
@@ -360,8 +375,8 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                     <Calendar className="absolute right-3 top-3 text-blue-400 pointer-events-none" size={14}/>
                 </div>
 
-                {/* 2. Other Filters */}
-                {['Region', 'RSM', 'SM', 'Dist Name', 'Channel'].map(key => (
+                {/* 2. Other Filters (Dynamically Rendered) */}
+                {filterKeys.map(key => (
                     !userFilters[key] && (
                         <div key={key} className="relative group">
                             <select 
@@ -369,7 +384,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                                 onChange={(e) => updateFilter(key, e.target.value)}
                                 className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold py-2.5 px-3 rounded-xl outline-none focus:border-blue-500 appearance-none transition-all cursor-pointer"
                             >
-                                <option value="">{key.replace('_', ' ')}: All</option>
+                                <option value="">{getLabel(key)}: All</option>
                                 {getOptions(key).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                             <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none group-hover:text-blue-500"/>
@@ -654,4 +669,3 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
     </div>
   );
 }
-
