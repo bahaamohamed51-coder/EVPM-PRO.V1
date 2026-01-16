@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PlanRow, AchievedRow, KPIRow } from '../types';
 import { calculateTimeGone, formatNumber, getUniqueValues } from '../utils';
-import { Filter, RefreshCw, ChevronDown, Calendar, TrendingUp, TrendingDown, Clock, Activity, LineChart as IconLineChart, XCircle } from 'lucide-react';
+import { Filter, RefreshCw, ChevronDown, Calendar, TrendingUp, TrendingDown, Clock, Activity, LineChart as IconLineChart, XCircle, AlertCircle } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   AreaChart, Area, CartesianGrid, Cell, PieChart, Pie, Legend, LabelList, LineChart, Line 
@@ -24,7 +24,7 @@ const TimePieWidget = ({ percentage, dateString }: { percentage: number, dateStr
     ];
 
     return (
-        <div className="bg-slate-800 text-white rounded-3xl p-5 shadow-lg border border-slate-700 flex flex-row items-center justify-between gap-4 relative overflow-hidden h-full">
+        <div className="bg-slate-800 text-white rounded-3xl p-5 shadow-lg border border-slate-700 flex flex-row items-center justify-between gap-4 relative overflow-hidden h-full group hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
              <div className="z-10 flex-1">
                  <h2 className="text-lg font-black text-slate-100 flex items-center gap-2">
                     <Clock className="text-red-400" size={20} /> Time Gone
@@ -90,19 +90,25 @@ const StatCard = ({ title, actual, plan, prefix = '', customBg = 'bg-white', cus
     const progressFillClass = isGSV ? 'bg-emerald-500' : (isUp ? 'bg-emerald-500' : 'bg-blue-500');
     
     return (
-        <div className={`${customBg} rounded-2xl p-5 shadow-sm border ${isGSV ? 'border-purple-700' : 'border-slate-100'} hover:shadow-md transition-all h-full flex flex-col justify-between`}>
-            <div className="flex justify-between items-start mb-2">
-                <span className={`${titleClass} font-black ${titleColor} uppercase tracking-wide`}>{title}</span>
-                <span className={`text-sm px-2 py-0.5 rounded-lg font-black ${percentBadgeClass}`}>
-                    {percent.toFixed(1)}%
-                </span>
+        <div className={`${customBg} rounded-2xl p-5 shadow-lg border ${isGSV ? 'border-purple-700' : 'border-slate-100'} hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out h-full flex flex-col justify-between relative overflow-hidden group`}>
+            {/* Gloss Effect */}
+            {!isGSV && <div className="absolute -top-10 -right-10 w-24 h-24 bg-gradient-to-br from-blue-50 to-transparent rounded-full opacity-50 blur-xl group-hover:scale-150 transition-transform duration-500"></div>}
+            
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-2">
+                    <span className={`${titleClass} font-black ${titleColor} uppercase tracking-wide`}>{title}</span>
+                    <span className={`text-sm px-2 py-0.5 rounded-lg font-black ${percentBadgeClass}`}>
+                        {percent.toFixed(1)}%
+                    </span>
+                </div>
+                <div className="flex items-end gap-2 mt-2">
+                    <h3 className={`text-2xl font-black ${customText}`}>{prefix}{formatNumber(actual)}</h3>
+                    <span className={`${planValueClass} mb-1`}>/ {formatNumber(plan)}</span>
+                </div>
             </div>
-            <div className="flex items-end gap-2 mt-2">
-                <h3 className={`text-2xl font-black ${customText}`}>{prefix}{formatNumber(actual)}</h3>
-                <span className={`${planValueClass} mb-1`}>/ {formatNumber(plan)}</span>
-            </div>
-            <div className={`w-full h-3 rounded-full mt-4 overflow-hidden ${progressTrackClass}`}>
-                <div className={`h-full rounded-full ${progressFillClass}`} style={{ width: `${Math.min(percent, 100)}%` }}></div>
+            
+            <div className={`w-full h-3 rounded-full mt-4 overflow-hidden ${progressTrackClass} relative z-10`}>
+                <div className={`h-full rounded-full ${progressFillClass} shadow-[0_0_10px_rgba(0,0,0,0.1)]`} style={{ width: `${Math.min(percent, 100)}%` }}></div>
             </div>
         </div>
     );
@@ -111,10 +117,10 @@ const StatCard = ({ title, actual, plan, prefix = '', customBg = 'bg-white', cus
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-slate-800 text-white text-xs p-3 rounded-lg shadow-xl border border-slate-700">
-          <p className="font-bold mb-1">{label}</p>
+        <div className="bg-slate-800/95 backdrop-blur-sm text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-600">
+          <p className="font-bold mb-1 border-b border-slate-600 pb-1">{label}</p>
           {payload.map((p: any, i: number) => (
-             <p key={i} style={{ color: p.color }}>
+             <p key={i} style={{ color: p.color }} className="font-bold">
                 {p.name}: {formatNumber(p.value)}
              </p>
           ))}
@@ -133,12 +139,12 @@ const KpiFilterButtons = ({ current, onChange }: { current: string, onChange: (v
     ];
 
     return (
-        <div className="flex bg-slate-800 p-1 rounded-xl gap-1">
+        <div className="flex bg-slate-800 p-1 rounded-xl gap-1 shadow-inner">
             {options.map(opt => (
                 <button
                 key={opt.k}
                 onClick={() => onChange(opt.k)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${current === opt.k ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:text-white hover:bg-slate-700'}`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${current === opt.k ? 'bg-gradient-to-t from-blue-600 to-blue-500 text-white shadow-md' : 'text-slate-300 hover:text-white hover:bg-slate-700'}`}
                 >
                     {opt.l}
                 </button>
@@ -167,44 +173,75 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
   const isSalesman = !!userFilters['SALESMANNO'];
   const isRestrictedView = !!(userFilters['Dist Name'] || isSalesman);
 
-  // AUTO-SELECT LATEST DATE
+  // 1. SMART DATE LOGIC PREPARATION
+  // Get all unique dates present in the achievements data, sorted ascending
+  const availableDates = useMemo(() => {
+    const dates = new Set<string>();
+    achievements.forEach(a => {
+        if (a.Days) {
+            const d = String(a.Days).split('T')[0];
+            if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                dates.add(d);
+            }
+        }
+    });
+    return Array.from(dates).sort();
+  }, [achievements]);
+
+  // Calculate the "Effective Date"
+  // If selectedDate has data, use it.
+  // If not, use the closest previous date that has data.
+  const effectiveDate = useMemo(() => {
+      // Direct match?
+      if (availableDates.includes(selectedDate)) return selectedDate;
+
+      // No match, find previous closest
+      // availableDates is sorted ASC. Iterate backwards.
+      for (let i = availableDates.length - 1; i >= 0; i--) {
+          if (availableDates[i] < selectedDate) {
+              return availableDates[i];
+          }
+      }
+
+      // If selected date is before all data, just return selectedDate (it will show 0s)
+      return selectedDate;
+  }, [selectedDate, availableDates]);
+
+  // Is Smart Fallback Active?
+  const isFallbackActive = selectedDate !== effectiveDate && availableDates.length > 0;
+
+  // AUTO-SELECT LATEST DATE ON LOAD/UPDATE
   useEffect(() => {
     if (achievements.length > 0) {
         const today = new Date().toISOString().split('T')[0];
         const hasDataForToday = achievements.some(a => String(a.Days).includes(today));
         
         if (!hasDataForToday) {
-            const uniqueDates = Array.from(new Set(
-                achievements
-                    .map(a => String(a.Days).split('T')[0]) 
-                    .filter(d => d.match(/^\d{4}-\d{2}-\d{2}$/)) 
-            )).sort();
-
-            if (uniqueDates.length > 0) {
-                const latestDate = uniqueDates[uniqueDates.length - 1];
+            if (availableDates.length > 0) {
+                const latestDate = availableDates[availableDates.length - 1];
                 setSelectedDate(latestDate);
             }
         }
     }
-  }, [achievements]);
+  }, [achievements, availableDates]);
 
   // Chart Filters States
   const [dailyKpi, setDailyKpi] = useState<'Ach GSV' | 'Ach ECO' | 'Ach PC' | 'Ach LPC' | 'Ach MVS'>('Ach GSV');
   const [channelKpi, setChannelKpi] = useState<string>('GSV');
   const [distKpi, setDistKpi] = useState<string>('GSV'); // Controls Top 5 & Bottom 5
 
-  // 1. FILTER LOGIC
+  // 2. FILTER LOGIC
   const filteredPlans = useMemo(() => {
     return plans.filter(row => Object.entries(activeFilters).every(([key, val]) => !val || String(row[key as keyof PlanRow]) === String(val)));
   }, [plans, activeFilters]);
 
-  // 2. DATA MERGING
+  // 3. DATA MERGING (Using Effective Date)
   const currentViewData = useMemo(() => {
     return filteredPlans.map(plan => {
         const planId = String(plan.SALESMANNO).trim();
         const ach = achievements.find(a => 
             String(a.SALESMANNO).trim() === planId && 
-            String(a.Days).includes(selectedDate)
+            String(a.Days).includes(effectiveDate) // USE SMART DATE HERE
         );
 
         return {
@@ -216,9 +253,9 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
             "Ach MVS": ach ? Number(ach["Ach MVS"]) : 0,
         } as KPIRow;
     });
-  }, [filteredPlans, achievements, selectedDate]);
+  }, [filteredPlans, achievements, effectiveDate]);
 
-  // 3. DATA FOR LINE CHART
+  // 4. DATA FOR LINE CHART (Unaffected by single date filter, shows history)
   const chartData = useMemo(() => {
      const allowedSalesmen = new Set(filteredPlans.map(p => String(p.SALESMANNO).trim()));
      const relevantAchievements = achievements.filter(a => allowedSalesmen.has(String(a.SALESMANNO).trim()));
@@ -317,15 +354,25 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
   
   // Clear All Filters Handler
   const handleClearFilters = () => {
+    // 1. Reset all selectable filters to empty, but CRITICALLY:
+    // Spread ...userFilters at the end to ensure enforced permissions (like SALESMANNO) are restored.
     setActiveFilters({
-        Region: userFilters['Region'] || '',
-        RSM: userFilters['RSM'] || '',
-        SM: userFilters['SM'] || '',
-        'Dist Name': userFilters['Dist Name'] || '',
-        'T.L Name': userFilters['T.L Name'] || '',
-        SALESMANNAMEA: userFilters['SALESMANNAMEA'] || '',
-        Channel: userFilters['Channel'] || ''
+        Region: '',
+        RSM: '',
+        SM: '',
+        'Dist Name': '',
+        'T.L Name': '',
+        SALESMANNAMEA: '',
+        Channel: '',
+        ...userFilters
     });
+
+    // 2. Reset Date to Latest Available
+    if (availableDates.length > 0) {
+        setSelectedDate(availableDates[availableDates.length - 1]);
+    } else {
+        setSelectedDate(new Date().toISOString().split('T')[0]);
+    }
   };
 
   // Helper for nice labels
@@ -341,7 +388,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
   return (
     <div className="space-y-6 pb-12">
         {/* Header & Date Filter */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+        <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl p-6 shadow-md border border-slate-100">
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
                 <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
                     <Filter size={16} className="text-blue-600"/> 
@@ -352,7 +399,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                     <button onClick={handleClearFilters} className="text-[10px] bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 font-bold">
                         <XCircle size={12}/> Clear All
                     </button>
-                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 bg-slate-50 px-3 py-1 rounded-lg">
+                    <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">
                         <Calendar size={12}/> Updated: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : 'N/A'}
                     </span>
                     <button onClick={onRefresh} className="text-[10px] bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 font-bold">
@@ -362,7 +409,6 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
             </div>
             
             {/* Dropdown Filters INCLUDING DATE + NEW FILTERS */}
-            {/* Expanded Grid to 8 Columns on XL screens to fit Date + 7 Filters */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3">
                 {/* 1. Date Picker with Admin Styling */}
                 <div className="relative col-span-1">
@@ -370,9 +416,16 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                         type="date" 
                         value={selectedDate} 
                         onChange={(e) => setSelectedDate(e.target.value)} 
-                        className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-blue-500"
+                        className={`w-full border rounded-xl px-4 py-2.5 text-[11px] font-bold text-slate-700 outline-none transition-all shadow-sm ${isFallbackActive ? 'bg-orange-50 border-orange-200' : 'bg-white border-blue-200 focus:border-blue-500'}`}
                     />
-                    <Calendar className="absolute right-3 top-3 text-blue-400 pointer-events-none" size={14}/>
+                    <Calendar className={`absolute right-3 top-3 pointer-events-none ${isFallbackActive ? 'text-orange-400' : 'text-blue-400'}`} size={14}/>
+                    
+                    {/* Smart Filter Indicator */}
+                    {isFallbackActive && (
+                        <div className="absolute -bottom-6 right-0 bg-orange-100 text-orange-700 text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 whitespace-nowrap border border-orange-200 shadow-sm z-10">
+                            <AlertCircle size={10} /> Data: {effectiveDate}
+                        </div>
+                    )}
                 </div>
 
                 {/* 2. Other Filters (Dynamically Rendered) */}
@@ -382,7 +435,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                             <select 
                                 value={activeFilters[key as keyof typeof activeFilters]} 
                                 onChange={(e) => updateFilter(key, e.target.value)}
-                                className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold py-2.5 px-3 rounded-xl outline-none focus:border-blue-500 appearance-none transition-all cursor-pointer"
+                                className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold py-2.5 px-3 rounded-xl outline-none focus:border-blue-500 appearance-none transition-all cursor-pointer shadow-sm"
                             >
                                 <option value="">{getLabel(key)}: All</option>
                                 {getOptions(key).map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -402,25 +455,25 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                 plan={aggregates.gsv_p} 
                 actual={aggregates.gsv_a} 
                 prefix="" 
-                customBg="bg-gradient-to-br from-purple-900 to-indigo-900" 
+                customBg="bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800" 
                 customText="text-white"
             />
         </div>
 
         {/* SECTION 2: Other KPIs Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="ECO Coverage" plan={aggregates.eco_p} actual={aggregates.eco_a} />
-            <StatCard title="Productive Calls" plan={aggregates.pc_p} actual={aggregates.pc_a} />
-            <StatCard title="LPC" plan={aggregates.lpc_p} actual={aggregates.lpc_a} />
-            <StatCard title="MVS" plan={aggregates.mvs_p} actual={aggregates.mvs_a} />
+            <StatCard title="ECO Coverage" plan={aggregates.eco_p} actual={aggregates.eco_a} customBg="bg-white" />
+            <StatCard title="Productive Calls" plan={aggregates.pc_p} actual={aggregates.pc_a} customBg="bg-white" />
+            <StatCard title="LPC" plan={aggregates.lpc_p} actual={aggregates.lpc_a} customBg="bg-white" />
+            <StatCard title="MVS" plan={aggregates.mvs_p} actual={aggregates.mvs_a} customBg="bg-white" />
         </div>
 
         {/* SECTION 3: LINE CHART (Daily Progress) */}
         {/* Reduce Container Padding to p-2 for wider chart */}
-        <div className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100">
+        <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl p-3 shadow-md border border-slate-100">
              <div className="flex flex-wrap justify-between items-center mb-4 gap-4 px-3 pt-3">
                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shadow-sm">
                         <IconLineChart size={20} />
                     </div>
                     <div>
@@ -430,7 +483,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                  </div>
                  
                  {/* KPI Selectors for Chart - Updated Styles */}
-                 <div className="flex bg-slate-800 p-1 rounded-xl gap-1">
+                 <div className="flex bg-slate-800 p-1 rounded-xl gap-1 shadow-inner">
                      {[
                          { k: 'Ach GSV', l: 'GSV' }, { k: 'Ach ECO', l: 'ECO' }, 
                          { k: 'Ach PC', l: 'PC' }, { k: 'Ach LPC', l: 'LPC' }, { k: 'Ach MVS', l: 'MVS' }
@@ -438,7 +491,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                          <button
                             key={opt.k}
                             onClick={() => setDailyKpi(opt.k as any)}
-                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${dailyKpi === opt.k ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:text-white hover:bg-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${dailyKpi === opt.k ? 'bg-gradient-to-t from-blue-600 to-blue-500 text-white shadow-md' : 'text-slate-300 hover:text-white hover:bg-slate-700'}`}
                          >
                              {opt.l}
                          </button>
@@ -450,6 +503,15 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
              <div className="h-96 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{top: 20, right: 10, left: 10, bottom: 0}}>
+                        <defs>
+                            <filter id="glow" height="300%" width="300%" x="-100%" y="-100%">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
                         <XAxis 
                             dataKey="date" 
@@ -482,9 +544,10 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                             type="monotone" 
                             dataKey="value" 
                             stroke="#3b82f6" 
-                            strokeWidth={3} 
+                            strokeWidth={4} 
                             dot={{r: 4, strokeWidth: 0, fill: '#3b82f6'}} 
-                            activeDot={{r: 6}} 
+                            activeDot={{r: 7, stroke: '#fff', strokeWidth: 2}} 
+                            filter="url(#glow)"
                         >
                              <LabelList 
                                 dataKey="value" 
@@ -504,7 +567,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
             
             {/* Performance by Channel (Bar Chart) - HIDDEN IF SALESMAN */}
             {!isSalesman && (
-                <div className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100">
+                <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl p-3 shadow-md border border-slate-100">
                     <div className="flex flex-wrap justify-between items-center mb-4 gap-4 px-3 pt-3">
                         <h3 className="font-black text-slate-700 text-lg">Performance by Channel</h3>
                         <KpiFilterButtons current={channelKpi} onChange={setChannelKpi} />
@@ -512,6 +575,16 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={channelData} margin={{top: 20, right: 10, left: -20, bottom: 0}}>
+                                <defs>
+                                    <linearGradient id="colorPlanBar" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#fdba74" stopOpacity={1}/>
+                                        <stop offset="100%" stopColor="#f97316" stopOpacity={1}/>
+                                    </linearGradient>
+                                    <linearGradient id="colorActualBar" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
+                                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={1}/>
+                                    </linearGradient>
+                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
                                 <XAxis dataKey="name" tick={{fontSize: 10, fontWeight: 'bold'}} axisLine={false} tickLine={false} />
                                 <YAxis tickFormatter={(val) => formatNumber(val)} tick={{fontSize: 10, fontWeight: 'bold'}} axisLine={false} tickLine={false} />
@@ -521,8 +594,8 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                                     wrapperStyle={{fontSize: '10px', fontWeight: 'bold', paddingTop: '10px'}} 
                                     formatter={(value) => <span style={{ marginInlineStart: '5px', marginInlineEnd: '15px' }}>{value}</span>}
                                 />
-                                <Bar dataKey="Plan" fill="#f97316" radius={[4, 4, 0, 0]} barSize={20} name="Plan" />
-                                <Bar dataKey="Actual" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} name="Achieved">
+                                <Bar dataKey="Plan" fill="url(#colorPlanBar)" radius={[4, 4, 0, 0]} barSize={20} name="Plan" />
+                                <Bar dataKey="Actual" fill="url(#colorActualBar)" radius={[4, 4, 0, 0]} barSize={20} name="Achieved">
                                     <LabelList dataKey="achPct" position="top" formatter={(val: any) => `${val}%`} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#3b82f6' }} />
                                 </Bar>
                             </BarChart>
@@ -535,7 +608,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
             {!isRestrictedView && (
                 <div>
                     {/* Shared Control for Top/Bottom */}
-                    <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-3xl border border-slate-100">
+                    <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
                          <h3 className="font-black text-slate-700 text-sm flex items-center gap-2">
                             <Activity size={18} className="text-blue-500"/> Distributor Ranking
                          </h3>
@@ -544,7 +617,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         
-                        <div className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100">
+                        <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl p-3 shadow-md border border-slate-100">
                             <div className="flex items-center gap-2 mb-4 px-3 pt-3">
                                 <TrendingUp size={20} className="text-emerald-500"/>
                                 <h3 className="font-black text-slate-700 text-lg">Top 5 Distributors ({distKpi})</h3>
@@ -555,7 +628,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                                     <AreaChart data={topDistributors} margin={{top: 20, right: 0, left: 0, bottom: 30}}>
                                         <defs>
                                             <linearGradient id="colorGsvTop" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.6}/>
                                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
@@ -603,7 +676,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100">
+                        <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl p-3 shadow-md border border-slate-100">
                             <div className="flex items-center gap-2 mb-4 px-3 pt-3">
                                 <TrendingDown size={20} className="text-red-500"/>
                                 <h3 className="font-black text-slate-700 text-lg">Bottom 5 Distributors ({distKpi})</h3>
@@ -614,7 +687,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
                                     <AreaChart data={bottomDistributors} margin={{top: 20, right: 0, left: 0, bottom: 30}}>
                                         <defs>
                                             <linearGradient id="colorGsvBottom" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.6}/>
                                                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
