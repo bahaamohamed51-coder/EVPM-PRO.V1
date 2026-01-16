@@ -186,9 +186,9 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
                     className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 p-3 rounded-xl flex items-center justify-center gap-2 transition-all"
                 >
                     <Download size={20} />
-                    <span className="font-black text-sm">تثبيت التطبيق على الهاتف</span>
+                    <span className="font-black text-sm">تثبيت التطبيق</span>
                 </button>
-                <p className="text-[9px] text-center text-emerald-500 mt-1 font-bold">اضغط هنا لإضافة التطبيق للشاشة الرئيسية</p>
+                <p className="text-[9px] text-center text-emerald-500 mt-1 font-bold">اضغط هنا لتثبيت التطبيق على جهازك</p>
             </div>
         )}
 
