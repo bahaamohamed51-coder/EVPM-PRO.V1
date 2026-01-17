@@ -1,6 +1,6 @@
 
-export const calculateTimeGone = () => {
-  const now = new Date();
+export const calculateTimeGone = (dateInput?: string | Date) => {
+  const now = dateInput ? new Date(dateInput) : new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
   
@@ -18,6 +18,7 @@ export const calculateTimeGone = () => {
     // Assuming Friday (5) is the weekend. Update if Saturday is also off.
     if (dayOfWeek !== 5) {
       totalWorkingDays++;
+      // Check if this day is before or equal to the selected date
       if (day <= now.getDate()) {
         passedWorkingDays++;
       }
