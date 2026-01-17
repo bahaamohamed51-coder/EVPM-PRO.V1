@@ -301,7 +301,7 @@ export default function EVPMDashboard({ plans, achievements, onRefresh, lastUpda
   // 4. DATA FOR LINE CHART (Daily Progress) - WITH TARGET LINE & FILTERED BY DATE
   const chartData = useMemo(() => {
      // 1. Calculate Total Plan for the current filtered scope and selected KPI
-     const planKey = dailyKpi.replace('Ach', 'Plan') as keyof KPIRow;
+     const planKey = dailyKpi.replace('Ach', 'Plan') as keyof PlanRow;
      const totalPlan = filteredPlans.reduce((sum, row) => sum + (Number(row[planKey]) || 0), 0);
 
      const allowedSalesmen = new Set(filteredPlans.map(p => String(p.SALESMANNO).trim()));
