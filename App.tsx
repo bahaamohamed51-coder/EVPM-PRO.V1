@@ -84,6 +84,14 @@ const App: React.FC = () => {
       const newConfig = { ...config, syncUrl: cleanUrl, lastUpdated: new Date().toISOString() };
       setConfig(newConfig);
       localStorage.setItem('evpm_config', JSON.stringify(newConfig));
+      
+      // CACHING: Save data to localStorage to prevent white screen on offline/reload
+      try {
+        localStorage.setItem('evpm_data', JSON.stringify(json));
+      } catch (e) {
+        console.warn('Storage Limit Exceeded: Could not cache data locally.');
+      }
+
     } catch (err) {
       console.error("Sync Failed:", err);
     } finally {
@@ -91,12 +99,29 @@ const App: React.FC = () => {
     }
   }, [config]);
 
+  // Load Data on Mount (From Cache first, then Sync)
   useEffect(() => {
     const savedUser = localStorage.getItem('evpm_user');
     if (savedUser) setCurrentUser(JSON.parse(savedUser));
     
-    // Load local data if available
-    if (config.syncUrl && plans.length === 0) {
+    // 1. Try Loading from Local Cache immediately
+    const cachedData = localStorage.getItem('evpm_data');
+    let hasCache = false;
+    if (cachedData) {
+        try {
+            const json = JSON.parse(cachedData);
+            if (json.plans) setPlans(json.plans);
+            if (json.achievements) setAchievements(json.achievements);
+            if (json.users) setUsers(json.users);
+            if (json.jobs) setJobs(json.jobs);
+            hasCache = true;
+        } catch (e) {
+            console.error('Failed to parse cached data');
+        }
+    }
+
+    // 2. Sync if configured (Background update)
+    if (config.syncUrl) {
       syncData(config.syncUrl);
     }
   }, []);
@@ -146,10 +171,12 @@ const App: React.FC = () => {
 
   // Create a placeholder for currentData for compatibility with Login/Admin logic which expects KPIRow[]
   // We'll just map plans to a basic structure for now
-  const dummyMergedData = plans.map(p => ({
-      ...p,
-      "Ach GSV": 0, "Ach ECO": 0, "Ach PC": 0, "Ach LPC": 0, "Ach MVS": 0,
-  }));
+  const dummyMergedData = useMemo(() => {
+      return plans.map(p => ({
+        ...p,
+        "Ach GSV": 0, "Ach ECO": 0, "Ach PC": 0, "Ach LPC": 0, "Ach MVS": 0,
+    }));
+  }, [plans]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-cairo relative isolate">
