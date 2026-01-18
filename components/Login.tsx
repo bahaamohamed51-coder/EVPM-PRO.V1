@@ -38,6 +38,13 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
       .map(u => u.name || u.username);
   }, [users]);
   
+  // Admin List (From Users Sheet)
+  const adminList = useMemo(() => {
+    return users
+      .filter(u => u.role === 'admin')
+      .map(u => u.username);
+  }, [users]);
+  
   const salesmanList = useMemo(() => {
     // Unique list of Salesmen with ID
     const unique = new Map();
@@ -49,18 +56,21 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
     return Array.from(unique.values());
   }, [data]);
 
-  // General Filter for Searchable Dropdowns (ASM & Salesman)
+  // General Filter for Searchable Dropdowns (ASM & Salesman & Staff & Admin)
   const filteredList = useMemo(() => {
     if (!searchTerm) {
         if (roleType === 'ASM') return asmList;
         if (roleType === 'SALESMANNAMEA') return salesmanList;
         if (roleType === 'Staff') return staffList;
+        if (roleType === 'Admin') return adminList;
         return [];
     }
-    const source = roleType === 'ASM' ? asmList : (roleType === 'Staff' ? staffList : salesmanList);
+    const source = roleType === 'ASM' ? asmList : 
+                   (roleType === 'Staff' ? staffList : 
+                   (roleType === 'Admin' ? adminList : salesmanList));
     // @ts-ignore
     return source.filter(s => s && s.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [asmList, salesmanList, staffList, searchTerm, roleType]);
+  }, [asmList, salesmanList, staffList, adminList, searchTerm, roleType]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,14 +83,11 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
         return;
     }
 
-    // Admin Backdoor
-    if (roleType === 'Admin' && password === 'Bi522129') {
-        onLogin({ username: 'Bahaa', name: 'Bahaa', role: 'admin', jobTitle: 'IT Manager' });
-        return;
-    }
+    // Security Fix: All authentication must go through the Users list
 
     if (!roleType) { setError('يرجى اختيار الوظيفة'); return; }
-    if (!selectedIdentity && roleType !== 'Admin') { setError('يرجى اختيار الاسم/الفرع/الكود'); return; }
+    // Now allow Admin to pass this check as they will select identity via input
+    if (!selectedIdentity) { setError('يرجى اختيار الاسم/الفرع/الكود'); return; }
 
     // PASSWORD & IDENTITY LOGIC
     // -------------------------
@@ -89,8 +96,6 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
     // 1. Salesman: Finds their Distributor (ASM) and uses Distributor's password
     if (roleType === 'SALESMANNAMEA') {
         const salesmanId = selectedIdentity.split(' - ')[0].trim(); // Extract ID and trim
-        // Find row in Data to get Dist Name
-        // FIX: Convert SALESMANNO to string to ensure matching against salesmanId (string) and ignore types (number vs string)
         const salesmanRow = data.find(r => String(r.SALESMANNO).trim() === salesmanId);
         
         if (salesmanRow && salesmanRow['Dist Name']) {
@@ -101,20 +106,12 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
         }
     }
 
-    // 2. ASM / Distributor: Uses their own name as username
-    if (roleType === 'ASM') {
-        targetUsername = selectedIdentity;
-    }
-
-    // 3. Staff: Uses their name as username (or mapped username from sheet)
-    if (roleType === 'Staff') {
-        // We compare against the name selected in dropdown
+    // 2. Direct Username Mapping (ASM, Staff, Admin)
+    if (roleType === 'ASM' || roleType === 'Staff' || roleType === 'Admin') {
         targetUsername = selectedIdentity;
     }
 
     // 4. Find User Credential
-    // Checks if there is a User in the uploaded 'users' list where username matches 'targetUsername'
-    // or Name matches 'targetUsername' (for Staff/Managers)
     const validUser = users.find(u => {
         const uName = String(u.name || u.username).trim().toLowerCase();
         const uUser = String(u.username).trim().toLowerCase();
@@ -123,26 +120,7 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
         return (uName === target || uUser === target) && String(u.password).trim() === String(password).trim();
     });
 
-    // Fallback/Demo Logic (Only if not found in official users list)
-    // If exact credential not found, but identity exists in Data, check default password '123456'
-    let isAuthenticated = false;
-    let finalUserObj: User | null = null;
-
     if (validUser) {
-        isAuthenticated = true;
-        finalUserObj = validUser;
-    } else if (password === '123456' && roleType !== 'Staff') {
-         // Weak demo check (optional, remove in strict prod) - Disabled for Staff to enforce sheet credentials
-         isAuthenticated = true;
-         finalUserObj = {
-             username: targetUsername,
-             name: selectedIdentity,
-             role: roleType === 'Admin' || roleType === 'RSM' ? 'admin' : 'user',
-             jobTitle: roleType
-         };
-    }
-
-    if (isAuthenticated && finalUserObj) {
         // Enforce RLS context
         const rlsContext: any = {};
         if (roleType === 'RSM') rlsContext.RSM = selectedIdentity;
@@ -150,19 +128,17 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
         if (roleType === 'ASM') rlsContext['Dist Name'] = selectedIdentity;
         
         // Define Job Title (Override for Salesman to 'DSF')
-        let displayJobTitle = finalUserObj.jobTitle;
+        let displayJobTitle = validUser.jobTitle;
 
         if (roleType === 'SALESMANNAMEA') {
              const salesmanId = selectedIdentity.split(' - ')[0].trim();
              rlsContext.SALESMANNO = salesmanId;
              displayJobTitle = 'DSF'; // Force DSF title for salesmen
         }
-        // Staff has no RLS (sees all), handled in App.tsx
-
-        // Pass combined user info with updated jobTitle
-        onLogin({ ...finalUserObj, ...rlsContext, name: selectedIdentity, jobTitle: displayJobTitle });
+        
+        onLogin({ ...validUser, ...rlsContext, name: selectedIdentity, jobTitle: displayJobTitle });
     } else {
-        setError('كلمة المرور غير صحيحة');
+        setError('بيانات الدخول غير صحيحة. يرجى التأكد من اسم المستخدم وكلمة المرور');
     }
   };
 
@@ -225,18 +201,19 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
                     </div>
 
                     {/* 2. Dynamic Identity Selection based on Role */}
-                    {roleType && roleType !== 'Admin' && (
+                    {roleType && (
                         <div className="animate-fade-in-up">
                              <label className="text-[10px] font-black text-slate-400 mb-1 block text-right uppercase">
                                 {roleType === 'RSM' ? 'اسم المدير الإقليمي' : 
                                  roleType === 'SM' ? 'اسم مدير المبيعات' : 
                                  roleType === 'ASM' ? 'اسم الفرع / الموزع' : 
-                                 roleType === 'Staff' ? 'اسم الموظف' : 'كود / اسم المندوب'}
+                                 roleType === 'Staff' ? 'اسم الموظف' : 
+                                 roleType === 'Admin' ? 'اسم المستخدم (Admin)' : 'كود / اسم المندوب'}
                              </label>
                              
                              <div className="relative">
-                                {(roleType === 'SALESMANNAMEA' || roleType === 'ASM' || roleType === 'Staff') ? (
-                                    // Searchable Dropdown for Salesman OR ASM OR Staff
+                                {(roleType === 'SALESMANNAMEA' || roleType === 'ASM' || roleType === 'Staff' || roleType === 'Admin') ? (
+                                    // Searchable Dropdown for Salesman OR ASM OR Staff OR Admin
                                     <div className="relative">
                                         <input 
                                             type="text" 
@@ -271,7 +248,7 @@ export default function Login({ onLogin, users, data, jobs, config, setConfig, i
                                         )}
                                     </div>
                                 ) : (
-                                    // Standard Dropdown for Managers
+                                    // Standard Dropdown for Managers (RSM/SM)
                                     <>
                                         <select 
                                             value={selectedIdentity} 
